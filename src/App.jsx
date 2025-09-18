@@ -5,7 +5,7 @@ export default function App() {
   // ---------- State ----------
   const [items, setItems] = useState(() => {
     try {
-      const raw = localStorage.getItem("shopping_cart_items_v6");
+      const raw = localStorage.getItem("shopping_cart_items_v7");
       return raw ? JSON.parse(raw) : [];
     } catch {
       return [];
@@ -25,7 +25,7 @@ export default function App() {
 
   // ---------- Persistence ----------
   useEffect(() => {
-    localStorage.setItem("shopping_cart_items_v6", JSON.stringify(items));
+    localStorage.setItem("shopping_cart_items_v7", JSON.stringify(items));
   }, [items]);
 
   // Auto-scroll to the BOTTOM when a new row is added
@@ -143,8 +143,26 @@ export default function App() {
               >
                 <div className="col no">{idx + 1}</div>
                 <div className="col item itemCell">{it.name}</div>
-                <div className="col qty mono">{num(it.qty)}</div>
-                <div className="col unit mono">{num(it.price).toFixed(1)}</div>
+                <div className="col qty mono">
+                  <input
+                    className="in number small"
+                    type="number"
+                    min={1}
+                    value={it.qty}
+                    onChange={(e) => updateItem(setItems, it.id, { qty: clampInt(e.target.value, 1) })}
+                  />
+                </div>
+                <div className="col unit mono">
+                  {/* keep inline edit, but hide spinners */}
+                  <input
+                    className="in number small no-spin"
+                    type="number"
+                    step="0.1"
+                    min={0}
+                    value={it.price}
+                    onChange={(e) => updateItem(setItems, it.id, { price: clampFloat(e.target.value, 0) })}
+                  />
+                </div>
                 <div className="col amount mono">{fmtKVND(amount)}</div>
                 <div className="col action">
                   <button
@@ -196,11 +214,12 @@ export default function App() {
         </div>
         <div className="field narrow">
           <label>Unit Price</label>
+          {/* no spinners, numeric keypad on mobile */}
           <input
-            className="in number"
-            type="number"
-            min={0}
-            step="0.1"
+            className="in number no-spin"
+            type="text"
+            inputMode="decimal"
+            pattern="[0-9]*[.,]?[0-9]*"
             value={price}
             onChange={(e) => setPrice(clampFloat(e.target.value, 0))}
           />
@@ -226,7 +245,7 @@ export default function App() {
   );
 }
 
-/* ---------- Utils ---------- */
+/* ---------- Helpers ---------- */
 function uid() {
   return Date.now().toString(36) + Math.random().toString(36).slice(2);
 }
@@ -239,8 +258,10 @@ function clampInt(v, min = 0, max = Number.MAX_SAFE_INTEGER) {
   return Math.min(max, Math.max(min, x));
 }
 function clampFloat(v, min = 0, max = Number.MAX_VALUE) {
-  const x = num(v);
-  return Math.min(max, Math.max(min, x));
+  // allow "1,5" as 1.5, etc.
+  const x = Number(String(v).replace(",", "."));
+  const n = Number.isFinite(x) ? x : 0;
+  return Math.min(max, Math.max(min, n));
 }
 /** 10.0 k VND (number first, unit after) */
 function fmtKVND(v) {
@@ -252,4 +273,7 @@ function validate(name, qty, price) {
   if (!qty || qty <= 0) errs.push("Qty must be ≥ 1.");
   if (price < 0) errs.push("Unit price must be ≥ 0.");
   return errs;
+}
+function updateItem(setter, id, patch) {
+  setter(prev => prev.map(it => (it.id === id ? { ...it, ...patch } : it)));
 }
