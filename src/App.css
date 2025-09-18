@@ -8,6 +8,11 @@
 
   --green: #9fe6a8;
   --green-hover: #8dd494;
+
+  /* Button sizing */
+  --btn-pad-y: 9px;     /* ~10% smaller than 10px */
+  --btn-pad-x: 14px;    /* slightly narrower */
+  --btn-font: 15px;     /* one size smaller than 16px */
 }
 
 * { box-sizing: border-box; }
@@ -90,7 +95,7 @@ body {
   display: grid;
   grid-template-columns: auto 1fr;
   gap: 8px;
-  align-items: center; /* vertical center */
+  align-items: center;
 }
 
 /* Row 2: TWO equal columns; inside each, label+input full width */
@@ -103,7 +108,7 @@ body {
   display: grid;
   grid-template-columns: auto 1fr;
   gap: 8px;
-  align-items: center; /* vertical center */
+  align-items: center;
 }
 
 /* Row 3: buttons on ends */
@@ -126,13 +131,14 @@ body {
   color: #111;
 }
 
+/* ---- Buttons (10% smaller, slightly smaller font) ---- */
 .btn {
   border: 1px solid #1a1a1a;
   border-radius: 4px;
-  padding: 10px 16px;
+  padding: var(--btn-pad-y) var(--btn-pad-x);
   font-weight: 700;
   cursor: pointer;
-  font-size: 16px;
+  font-size: var(--btn-font);
   color: #111;
 }
 .btn.ghost { background: #fff; }
@@ -157,11 +163,7 @@ body {
   }
   .totalBox { grid-template-columns: auto 140px; gap: 6px; }
 
-  /* On small phones, give Row2 columns vertical stacking if needed */
-  .panel-3rows .row2 {
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-  }
+  .panel-3rows .row2 { grid-template-columns: 1fr 1fr; gap: 10px; }
 }
 @media (max-width: 420px) {
   :root { --row-h: 44px; }
@@ -169,6 +171,5 @@ body {
     grid-template-columns: 34px 1fr 48px 72px 78px 34px;
     gap: 5px; font-size: 13px;
   }
-  /* If it ever feels tight, stack Row2 on extra narrow devices */
-  .panel-3rows .row2 { grid-template-columns: 1fr; }
+  .panel-3rows .row2 { grid-template-columns: 1fr; } /* stack on very small phones */
 }

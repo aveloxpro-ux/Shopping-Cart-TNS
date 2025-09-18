@@ -2,24 +2,21 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import "./App.css";
 
 /**
- * Cart Builder — v13
- * - Table shows 7 rows
- * - Panel (3 rows):
- *    Row 1: Item Name (label + full-width input)
- *    Row 2: TWO COLUMNS side-by-side:
- *           [Qty label+input] | [Amount label+input]
- *    Row 3: CANCEL (left) | SAVE (right)
- * - Qty & Amount start empty (strings)
- * - Tap a row to load it into the panel (no inline table editing)
- * - Remove with small “X”
- * - Clear-all modal (Yes/No)
- * - Mobile-friendly (>=16px inputs, decimal keypad accepts "." or ",")
+ * Cart Builder — v14
+ * Changes:
+ * 1) Buttons 10% smaller + slightly smaller font
+ * 2) Panel "Amount" = Unit Price (no dividing by qty); table Amount = unitPrice * qty
+ * 3) Table Amount column shows plain number (no "k VND"); Total still shows "k VND"
+ * Other features kept:
+ * - 7 visible table rows
+ * - 3-row panel: Row1: Item Name; Row2: Qty | Amount; Row3: Cancel | Save
+ * - Tap row to edit; small "X" remove; clear-all modal; mobile-friendly inputs
  */
 
 export default function App() {
   const [items, setItems] = useState(() => {
     try {
-      const raw = localStorage.getItem("shopping_cart_items_v13");
+      const raw = localStorage.getItem("shopping_cart_items_v14");
       return raw ? JSON.parse(raw) : [];
     } catch {
       return [];
@@ -28,18 +25,18 @@ export default function App() {
 
   const [name, setName] = useState("");
   const [qtyStr, setQtyStr] = useState("");
-  const [amountStr, setAmountStr] = useState("");
+  const [amountStr, setAmountStr] = useState(""); // this is Unit Price in logic
   const [errors, setErrors] = useState([]);
   const [editingId, setEditingId] = useState(null);
   const [showConfirm, setShowConfirm] = useState(false);
 
   const tableRef = useRef(null);
   const panelRef = useRef(null);
-  const lastActionRef = useRef(null); // "add" | "save" | "remove" | null
+  const lastActionRef = useRef(null);
 
   // persist
   useEffect(() => {
-    localStorage.setItem("shopping_cart_items_v13", JSON.stringify(items));
+    localStorage.setItem("shopping_cart_items_v14", JSON.stringify(items));
   }, [items]);
 
   // scroll to bottom after add
@@ -50,29 +47,30 @@ export default function App() {
     lastActionRef.current = null;
   }, [items]);
 
+  // totals (subtotal used for Total Amount box)
   const totals = useMemo(() => {
     const subtotal = items.reduce((s, it) => s + num(it.qty) * num(it.unitPrice), 0);
     const totalQty = items.reduce((s, it) => s + num(it.qty), 0);
     return { subtotal, totalQty };
   }, [items]);
 
+  // click row to edit
   function onRowClick(it) {
     setEditingId(it.id);
     setName(it.name);
-    setQtyStr(String(num(it.qty) || ""));
-    const amt = num(it.qty) * num(it.unitPrice);
-    setAmountStr(amt ? String(amt) : "");
+    setQtyStr(String(num(it.qty) || ""));          // show qty
+    setAmountStr(String(num(it.unitPrice) || "")); // panel Amount holds UNIT PRICE
     panelRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
   }
 
+  // add or save
   function addOrSave() {
     const errs = validateForPanel(name, qtyStr, amountStr);
     setErrors(errs);
     if (errs.length) return;
 
     const qty = parseIntSafe(qtyStr);
-    const amount = parseFloatSafe(amountStr);
-    const unitPrice = safeDivide(amount, qty);
+    const unitPrice = parseFloatSafe(amountStr); // <- Amount field is unit price
 
     if (editingId) {
       setItems(prev =>
@@ -85,7 +83,7 @@ export default function App() {
       lastActionRef.current = "save";
     } else {
       const newItem = { id: uid(), name: name.trim(), qty, unitPrice: Number(unitPrice) };
-      setItems(prev => [...prev, newItem]);
+      setItems(prev => [...prev, newItem]); // append to bottom
       lastActionRef.current = "add";
     }
     clearForm();
@@ -130,7 +128,7 @@ export default function App() {
         </div>
       </header>
 
-      {/* Table */}
+      {/* Table Card */}
       <section className="card">
         <div className="tableHeader">
           <div className="col no">No.</div>
@@ -158,7 +156,8 @@ export default function App() {
                 <div className="col item itemCell">{it.name}</div>
                 <div className="col qty mono">{num(it.qty)}</div>
                 <div className="col unit mono">{num(it.unitPrice).toFixed(1)}</div>
-                <div className="col amount mono">{fmtKVND(lineAmt)}</div>
+                {/* Amount column = qty * unitPrice, plain number */}
+                <div className="col amount mono">{num(lineAmt).toFixed(1)}</div>
                 <div className="col action">
                   <button
                     className="remX"
@@ -187,7 +186,7 @@ export default function App() {
         </div>
       </section>
 
-      {/* Add / Edit panel */}
+      {/* Add / Edit panel (3 rows) */}
       <section className="panel-3rows" ref={panelRef}>
         {/* Row 1: Item Name */}
         <div className="row1">
@@ -200,7 +199,7 @@ export default function App() {
           />
         </div>
 
-        {/* Row 2: two equal columns (Qty | Amount), each label+input full width */}
+        {/* Row 2: Qty | Amount (Amount = Unit Price) */}
         <div className="row2">
           <div className="field">
             <label className="lbl">Qty</label>
@@ -275,11 +274,6 @@ function parseFloatSafe(s) {
   const n = Number(cleaned);
   return Number.isFinite(n) ? n : 0;
 }
-function safeDivide(amount, qty) {
-  const q = num(qty);
-  if (!q) return 0;
-  return num(amount) / q;
-}
 function fmtKVND(v) {
   return `${num(v).toFixed(1)} k VND`;
 }
@@ -287,13 +281,13 @@ function validateForPanel(name, qtyStr, amountStr) {
   const errs = [];
   if (!name.trim()) errs.push("Item name is required.");
   if (String(qtyStr).trim() === "") errs.push("Qty is required.");
-  if (String(amountStr).trim() === "") errs.push("Amount is required.");
+  if (String(amountStr).trim() === "") errs.push("Amount (unit price) is required.");
 
   const qty = parseIntSafe(qtyStr);
-  const amt = parseFloatSafe(amountStr);
+  const unitPrice = parseFloatSafe(amountStr);
 
   if (qty <= 0) errs.push("Qty must be ≥ 1.");
-  if (amt < 0) errs.push("Amount must be ≥ 0.");
+  if (unitPrice < 0) errs.push("Amount (unit price) must be ≥ 0.");
   return errs;
 }
 function onlyDigits(s) {
