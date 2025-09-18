@@ -2,21 +2,24 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import "./App.css";
 
 /**
- * Cart Builder — v11
- * - Panel:
- *   Row 1: Item Name (label + full-width input)
- *   Row 2: Qty (label+input), Amount (label+input), then SAVE + CANCEL on the right
- * - Qty & Amount start empty; users must type
- * - No inline editing in the table
- * - Accepts '.' or ',' for decimals. Inputs are >=16px to avoid iOS zoom
+ * Cart Builder — v13
+ * - Table shows 7 rows
+ * - Panel (3 rows):
+ *    Row 1: Item Name (label + full-width input)
+ *    Row 2: TWO COLUMNS side-by-side:
+ *           [Qty label+input] | [Amount label+input]
+ *    Row 3: CANCEL (left) | SAVE (right)
+ * - Qty & Amount start empty (strings)
+ * - Tap a row to load it into the panel (no inline table editing)
+ * - Remove with small “X”
  * - Clear-all modal (Yes/No)
+ * - Mobile-friendly (>=16px inputs, decimal keypad accepts "." or ",")
  */
 
 export default function App() {
-  // ---------- State ----------
   const [items, setItems] = useState(() => {
     try {
-      const raw = localStorage.getItem("shopping_cart_items_v11");
+      const raw = localStorage.getItem("shopping_cart_items_v13");
       return raw ? JSON.parse(raw) : [];
     } catch {
       return [];
@@ -24,23 +27,22 @@ export default function App() {
   });
 
   const [name, setName] = useState("");
-  const [qtyStr, setQtyStr] = useState("");       // keep as string so it can be blank
-  const [amountStr, setAmountStr] = useState(""); // keep as string so it can be blank
+  const [qtyStr, setQtyStr] = useState("");
+  const [amountStr, setAmountStr] = useState("");
   const [errors, setErrors] = useState([]);
   const [editingId, setEditingId] = useState(null);
   const [showConfirm, setShowConfirm] = useState(false);
 
-  // ---------- Refs ----------
   const tableRef = useRef(null);
   const panelRef = useRef(null);
   const lastActionRef = useRef(null); // "add" | "save" | "remove" | null
 
-  // ---------- Persistence ----------
+  // persist
   useEffect(() => {
-    localStorage.setItem("shopping_cart_items_v11", JSON.stringify(items));
+    localStorage.setItem("shopping_cart_items_v13", JSON.stringify(items));
   }, [items]);
 
-  // Scroll to bottom after add
+  // scroll to bottom after add
   useEffect(() => {
     if (lastActionRef.current === "add" && tableRef.current) {
       tableRef.current.scrollTop = tableRef.current.scrollHeight;
@@ -48,14 +50,12 @@ export default function App() {
     lastActionRef.current = null;
   }, [items]);
 
-  // ---------- Derived ----------
   const totals = useMemo(() => {
     const subtotal = items.reduce((s, it) => s + num(it.qty) * num(it.unitPrice), 0);
     const totalQty = items.reduce((s, it) => s + num(it.qty), 0);
     return { subtotal, totalQty };
   }, [items]);
 
-  // ---------- Handlers ----------
   function onRowClick(it) {
     setEditingId(it.id);
     setName(it.name);
@@ -85,7 +85,7 @@ export default function App() {
       lastActionRef.current = "save";
     } else {
       const newItem = { id: uid(), name: name.trim(), qty, unitPrice: Number(unitPrice) };
-      setItems(prev => [...prev, newItem]); // append at bottom
+      setItems(prev => [...prev, newItem]);
       lastActionRef.current = "add";
     }
     clearForm();
@@ -130,7 +130,7 @@ export default function App() {
         </div>
       </header>
 
-      {/* Card with table */}
+      {/* Table */}
       <section className="card">
         <div className="tableHeader">
           <div className="col no">No.</div>
@@ -187,9 +187,9 @@ export default function App() {
         </div>
       </section>
 
-      {/* Add / Edit panel — Row1: Item; Row2: Qty + Amount + [SAVE][CANCEL] */}
-      <section className="panel-2rows" ref={panelRef}>
-        {/* Row 1 */}
+      {/* Add / Edit panel */}
+      <section className="panel-3rows" ref={panelRef}>
+        {/* Row 1: Item Name */}
         <div className="row1">
           <label className="lbl">Item Name</label>
           <input
@@ -200,42 +200,48 @@ export default function App() {
           />
         </div>
 
-        {/* Row 2 */}
+        {/* Row 2: two equal columns (Qty | Amount), each label+input full width */}
         <div className="row2">
-          <label className="lbl">Qty</label>
-          <input
-            className="in number"
-            type="text"
-            inputMode="numeric"
-            pattern="[0-9]*"
-            value={qtyStr}
-            onChange={(e) => setQtyStr(onlyDigits(e.target.value))}
-          />
-
-          <label className="lbl">Amount</label>
-          <input
-            className="in number no-spin"
-            type="text"
-            inputMode="decimal"
-            pattern="[0-9]*[.,]?[0-9]*"
-            value={amountStr}
-            onChange={(e) => setAmountStr(onlyDecimal(e.target.value))}
-          />
-
-          <div className="buttons">
-            <button className="btn add equal" onClick={addOrSave}>SAVE</button>
-            <button className="btn ghost equal" onClick={clearForm}>CANCEL</button>
+          <div className="field">
+            <label className="lbl">Qty</label>
+            <input
+              className="in"
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              value={qtyStr}
+              onChange={(e) => setQtyStr(onlyDigits(e.target.value))}
+            />
           </div>
+
+          <div className="field">
+            <label className="lbl">Amount</label>
+            <input
+              className="in"
+              type="text"
+              inputMode="decimal"
+              pattern="[0-9]*[.,]?[0-9]*"
+              value={amountStr}
+              onChange={(e) => setAmountStr(onlyDecimal(e.target.value))}
+            />
+          </div>
+        </div>
+
+        {/* Row 3: buttons */}
+        <div className="row3">
+          <button className="btn ghost" onClick={clearForm}>CANCEL</button>
+          <button className="btn add" onClick={addOrSave}>SAVE</button>
         </div>
       </section>
 
+      {/* Errors */}
       {errors.length > 0 && (
         <ul className="errors">
           {errors.map((e, i) => <li key={i}>{e}</li>)}
         </ul>
       )}
 
-      {/* Clear All Modal */}
+      {/* Clear-all modal */}
       {showConfirm && (
         <div className="modalBackdrop" role="dialog" aria-modal="true">
           <div className="modalBox">
