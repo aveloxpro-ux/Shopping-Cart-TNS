@@ -1,0 +1,266 @@
+:root {
+  /* 10 visible rows; tweak --row-h to adjust density */
+  --row-h: 40px;
+
+  --border: #cfcfcf;
+  --ink: #212121;
+  --muted: #666;
+  --bg: #fff;
+  --panel: #fafafa;
+
+  --green: #9fe6a8; /* darker green for ADD/SAVE */
+  --green-hover: #8dd494;
+  --red: #ffe3e3; /* button background, subtle */
+  --red-text: #b91c1c; /* button text */
+}
+
+* {
+  box-sizing: border-box;
+}
+html,
+body,
+#root {
+  height: 100%;
+}
+body {
+  margin: 0;
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto,
+    'Helvetica Neue', Arial, 'Apple Color Emoji', 'Segoe UI Emoji';
+  color: var(--ink);
+  background: #f6f6f6;
+}
+
+.wrap {
+  max-width: 920px;
+  margin: 24px auto;
+  padding: 0 16px 48px;
+}
+
+/* header */
+.header {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 16px;
+}
+.title {
+  font-weight: 700;
+  font-size: 18px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.title .emoji {
+  opacity: 0.8;
+}
+
+.totalBox {
+  display: grid;
+  grid-template-columns: 140px 220px;
+  gap: 8px;
+  align-items: center;
+}
+.totalLabel {
+  font-size: 12px;
+  color: var(--muted);
+  text-align: right;
+}
+.totalValue {
+  border: 1px solid var(--border);
+  background: var(--bg);
+  padding: 6px 10px;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+/* card (table container) */
+.card {
+  border: 1px solid var(--ink);
+  background: var(--panel);
+  padding: 12px;
+  margin-bottom: 16px;
+}
+
+.tableHeader,
+.row {
+  display: grid;
+  grid-template-columns: 56px 1fr 90px 120px 140px 92px; /* No., Item, Qty, Unit, Amount, Action */
+  align-items: center;
+  gap: 8px;
+}
+
+.tableHeader {
+  font-size: 13px;
+  font-weight: 600;
+  border-bottom: 1px solid var(--border);
+  padding: 6px 4px;
+}
+
+/* >>> Fixed 10-row viewport, scrollable when more rows <<< */
+.tableBody {
+  height: calc(10 * var(--row-h)); /* always show ~10 lines */
+  overflow-y: auto;
+  background: #fff;
+  border: 1px solid var(--border);
+}
+
+.row {
+  min-height: var(--row-h);
+  padding: 6px 6px;
+  border-bottom: 1px solid #eee;
+  cursor: pointer;
+}
+.row:hover {
+  background: #f7f7f7;
+}
+.row.selected {
+  background: #eef6ff;
+}
+.row:last-child {
+  border-bottom: none;
+}
+
+.col.no {
+  text-align: right;
+  padding-right: 6px;
+}
+.col.qty,
+.col.unit,
+.col.amount,
+.col.action {
+  text-align: right;
+}
+.itemCell {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.mono {
+  font-variant-numeric: tabular-nums;
+}
+
+/* REMOVE button (red), smaller font than item name */
+.btn.remove {
+  background: var(--red);
+  color: var(--red-text);
+  border: 1px solid var(--red-text);
+  padding: 6px 10px;
+  border-radius: 4px;
+  font-weight: 600;
+  font-size: 12px; /* smaller than item text */
+  cursor: pointer;
+}
+.btn.remove:hover {
+  filter: brightness(0.98);
+}
+
+/* footer below table */
+.cardFooter {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 8px;
+}
+.footerLeft {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.muted {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+/* add / edit panel */
+.addPanel {
+  border: 1px solid var(--ink);
+  background: var(--panel);
+  padding: 14px;
+  display: grid;
+  grid-template-columns: 1fr 100px 140px auto; /* wider last column for buttons */
+  gap: 12px;
+  align-items: end;
+}
+
+/* inputs — make actual typed text black & aligned nicely */
+.field {
+  display: grid;
+  gap: 6px;
+}
+.field label {
+  font-size: 12px;
+  color: var(--muted);
+}
+.field.narrow {
+  max-width: 180px;
+}
+
+.in {
+  width: 100%;
+  border: 1px solid var(--border);
+  background: #fff;
+  padding: 10px 12px; /* a bit taller for better fit */
+  border-radius: 4px;
+  font-size: 14px;
+  line-height: 1.2;
+  color: #111; /* typed text = black */
+}
+.in::placeholder {
+  color: #999;
+}
+.in.number {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* actions / buttons */
+.actions {
+  display: flex;
+  justify-content: flex-end;
+}
+.btn {
+  border: 1px solid #1a1a1a;
+  background: #e9f0ff;
+  padding: 8px 14px;
+  border-radius: 4px;
+  font-weight: 700;
+  cursor: pointer;
+  color: #111; /* default button text black */
+}
+.btn:hover {
+  filter: brightness(0.98);
+}
+.btn.ghost {
+  background: #fff;
+}
+.btn.add {
+  background: var(--green);
+  border-color: #1a1a1a;
+  color: #111;
+}
+.btn.add:hover {
+  background: var(--green-hover);
+}
+
+.errors {
+  margin-top: 8px;
+  padding-left: 18px;
+  color: #b91c1c;
+  font-size: 13px;
+}
+
+/* responsive */
+@media (max-width: 760px) {
+  .totalBox {
+    grid-template-columns: 1fr 1fr;
+  }
+  .tableHeader,
+  .row {
+    grid-template-columns: 46px 1fr 70px 110px 120px 92px;
+  }
+  .addPanel {
+    grid-template-columns: 1fr 90px 120px 100px;
+  }
+}
