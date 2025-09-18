@@ -1,11 +1,19 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import "./App.css";
 
+/**
+ * Cart Builder — v8
+ * - Panel uses ItemName + (Qty, Amount); we compute unit price = amount/qty
+ * - Rows are not directly editable; edit via panel
+ * - Small "X" remove button
+ * - Mobile: decimal keypad, accepts '.' or ','
+ */
+
 export default function App() {
   // ---------- State ----------
   const [items, setItems] = useState(() => {
     try {
-      const raw = localStorage.getItem("shopping_cart_items_v7");
+      const raw = localStorage.getItem("shopping_cart_items_v8");
       return raw ? JSON.parse(raw) : [];
     } catch {
       return [];
@@ -14,7 +22,7 @@ export default function App() {
 
   const [name, setName] = useState("");
   const [qty, setQty] = useState(1);
-  const [price, setPrice] = useState(0);
+  const [amount, setAmount] = useState(0); // line total (k VND)
   const [errors, setErrors] = useState([]);
   const [editingId, setEditingId] = useState(null);
 
@@ -25,7 +33,7 @@ export default function App() {
 
   // ---------- Persistence ----------
   useEffect(() => {
-    localStorage.setItem("shopping_cart_items_v7", JSON.stringify(items));
+    localStorage.setItem("shopping_cart_items_v8", JSON.stringify(items));
   }, [items]);
 
   // Auto-scroll to the BOTTOM when a new row is added
@@ -38,40 +46,45 @@ export default function App() {
 
   // ---------- Derived ----------
   const totals = useMemo(() => {
-    const subtotal = items.reduce((s, it) => s + num(it.qty) * num(it.price), 0);
+    const subtotal = items.reduce((s, it) => s + num(it.qty) * num(it.unitPrice), 0);
     const totalQty = items.reduce((s, it) => s + num(it.qty), 0);
     return { subtotal, totalQty };
   }, [items]);
 
   // ---------- Handlers ----------
   function onRowClick(it) {
+    // load the row into the panel for editing
     setEditingId(it.id);
     setName(it.name);
     setQty(num(it.qty));
-    setPrice(num(it.price));
+    const amt = num(it.qty) * num(it.unitPrice);
+    setAmount(amt);
     addPanelRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
   }
 
   function addItem() {
-    const errs = validate(name, qty, price);
+    const errs = validateForPanel(name, qty, amount);
     setErrors(errs);
     if (errs.length) return;
 
-    const newItem = { id: uid(), name: name.trim(), qty: Number(qty), price: Number(price) };
-    setItems(prev => [...prev, newItem]); // append at bottom
+    const unitPrice = safeDivide(amount, qty);
+    const newItem = { id: uid(), name: name.trim(), qty: Number(qty), unitPrice: Number(unitPrice) };
+    setItems(prev => [...prev, newItem]); // append bottom
     lastActionRef.current = "add";
     clearForm();
   }
 
   function saveItem() {
     if (!editingId) return;
-    const errs = validate(name, qty, price);
+
+    const errs = validateForPanel(name, qty, amount);
     setErrors(errs);
     if (errs.length) return;
 
+    const unitPrice = safeDivide(amount, qty);
     setItems(prev =>
       prev.map(it =>
-        it.id === editingId ? { ...it, name: name.trim(), qty: Number(qty), price: Number(price) } : it
+        it.id === editingId ? { ...it, name: name.trim(), qty: Number(qty), unitPrice: Number(unitPrice) } : it
       )
     );
     lastActionRef.current = "save";
@@ -95,7 +108,7 @@ export default function App() {
     setEditingId(null);
     setName("");
     setQty(1);
-    setPrice(0);
+    setAmount(0);
     setErrors([]);
   }
 
@@ -127,53 +140,34 @@ export default function App() {
         </div>
 
         <div className="tableBody" ref={tableRef}>
-          {items.length === 0 ? (
-            <div className="empty">No items yet. Add something below.</div>
-          ) : null}
+          {items.length === 0 ? <div className="empty">No items yet. Add something below.</div> : null}
 
           {items.map((it, idx) => {
-            const amount = num(it.qty) * num(it.price);
+            const lineAmt = num(it.qty) * num(it.unitPrice);
             const selected = editingId === it.id;
             return (
               <div
                 className={`row ${selected ? "selected" : ""}`}
                 key={it.id}
                 onClick={() => onRowClick(it)}
-                title="Click to edit this line"
+                title="Tap to edit this line"
               >
                 <div className="col no">{idx + 1}</div>
                 <div className="col item itemCell">{it.name}</div>
-                <div className="col qty mono">
-                  <input
-                    className="in number small"
-                    type="number"
-                    min={1}
-                    value={it.qty}
-                    onChange={(e) => updateItem(setItems, it.id, { qty: clampInt(e.target.value, 1) })}
-                  />
-                </div>
-                <div className="col unit mono">
-                  {/* keep inline edit, but hide spinners */}
-                  <input
-                    className="in number small no-spin"
-                    type="number"
-                    step="0.1"
-                    min={0}
-                    value={it.price}
-                    onChange={(e) => updateItem(setItems, it.id, { price: clampFloat(e.target.value, 0) })}
-                  />
-                </div>
-                <div className="col amount mono">{fmtKVND(amount)}</div>
+                <div className="col qty mono">{num(it.qty)}</div>
+                <div className="col unit mono">{num(it.unitPrice).toFixed(1)}</div>
+                <div className="col amount mono">{fmtKVND(lineAmt)}</div>
                 <div className="col action">
                   <button
-                    className="btn remove"
+                    className="remX"
+                    aria-label="Remove"
                     title="Remove"
                     onClick={(e) => {
-                      e.stopPropagation(); // don't trigger row edit
+                      e.stopPropagation();
                       removeItem(it.id);
                     }}
                   >
-                    Remove
+                    X
                   </button>
                 </div>
               </div>
@@ -191,48 +185,59 @@ export default function App() {
         </div>
       </section>
 
-      {/* Add / Edit panel */}
-      <section className="addPanel" ref={addPanelRef}>
-        <div className="field">
-          <label>Item Name</label>
-          <input
-            className="in"
-            placeholder="e.g. Yo Most"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-          />
-        </div>
-        <div className="field narrow">
-          <label>Qty</label>
-          <input
-            className="in number"
-            type="number"
-            min={1}
-            value={qty}
-            onChange={(e) => setQty(clampInt(e.target.value, 1))}
-          />
-        </div>
-        <div className="field narrow">
-          <label>Unit Price</label>
-          {/* no spinners, numeric keypad on mobile */}
-          <input
-            className="in number no-spin"
-            type="text"
-            inputMode="decimal"
-            pattern="[0-9]*[.,]?[0-9]*"
-            value={price}
-            onChange={(e) => setPrice(clampFloat(e.target.value, 0))}
-          />
-        </div>
-        <div className="actions">
-          {isEditing ? (
-            <>
+      {/* Add / Edit panel — matches mockups */}
+      <section className="editPanel" ref={addPanelRef}>
+        {/* Row 1: Item Name + Add/Save */}
+        <div className="rowInputs">
+          <div className="field grow">
+            <label>Item Name</label>
+            <input
+              className="in"
+              placeholder="e.g. Book"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+            />
+          </div>
+
+          <div className="actions">
+            {isEditing ? (
               <button className="btn add" onClick={saveItem}>SAVE</button>
-              <button className="btn ghost" onClick={clearForm} style={{ marginLeft: 8 }}>Cancel</button>
-            </>
-          ) : (
-            <button className="btn add" onClick={addItem}>ADD</button>
-          )}
+            ) : (
+              <button className="btn add" onClick={addItem}>SAVE</button> /* label SAVE like mockup */
+            )}
+          </div>
+        </div>
+
+        {/* Row 2: Qty + Amount + Cancel */}
+        <div className="rowInputs">
+          <div className="field narrow">
+            <label>Qty</label>
+            <input
+              className="in number"
+              type="number"
+              min={1}
+              value={qty}
+              onChange={(e) => setQty(clampInt(e.target.value, 1))}
+            />
+          </div>
+
+          <div className="field narrow">
+            <label>Amount</label>
+            {/* Accept both "." and "," decimals, show decimal keypad; stop iOS zoom (font-size 16+ via CSS) */}
+            <input
+              className="in number no-spin"
+              type="text"
+              inputMode="decimal"
+              pattern="[0-9]*[.,]?[0-9]*"
+              placeholder="e.g. 10.5"
+              value={amount}
+              onChange={(e) => setAmount(clampFloat(e.target.value, 0))}
+            />
+          </div>
+
+          <div className="actions">
+            <button className="btn ghost" onClick={clearForm}>CANCEL</button>
+          </div>
         </div>
       </section>
 
@@ -245,7 +250,7 @@ export default function App() {
   );
 }
 
-/* ---------- Helpers ---------- */
+/* ---------- Utils ---------- */
 function uid() {
   return Date.now().toString(36) + Math.random().toString(36).slice(2);
 }
@@ -253,12 +258,16 @@ function num(v) {
   const x = Number(v);
   return Number.isFinite(x) ? x : 0;
 }
+function safeDivide(amount, qty) {
+  const q = num(qty);
+  if (!q) return 0;
+  return num(amount) / q;
+}
 function clampInt(v, min = 0, max = Number.MAX_SAFE_INTEGER) {
-  const x = Math.round(num(v));
-  return Math.min(max, Math.max(min, x));
+  const x = Math.round(Number(String(v).replace(",", ".")));
+  return Math.min(max, Math.max(min, Number.isFinite(x) ? x : 0));
 }
 function clampFloat(v, min = 0, max = Number.MAX_VALUE) {
-  // allow "1,5" as 1.5, etc.
   const x = Number(String(v).replace(",", "."));
   const n = Number.isFinite(x) ? x : 0;
   return Math.min(max, Math.max(min, n));
@@ -267,13 +276,10 @@ function clampFloat(v, min = 0, max = Number.MAX_VALUE) {
 function fmtKVND(v) {
   return `${num(v).toFixed(1)} k VND`;
 }
-function validate(name, qty, price) {
+function validateForPanel(name, qty, amount) {
   const errs = [];
   if (!name.trim()) errs.push("Item name is required.");
   if (!qty || qty <= 0) errs.push("Qty must be ≥ 1.");
-  if (price < 0) errs.push("Unit price must be ≥ 0.");
+  if (amount < 0) errs.push("Amount must be ≥ 0.");
   return errs;
-}
-function updateItem(setter, id, patch) {
-  setter(prev => prev.map(it => (it.id === id ? { ...it, ...patch } : it)));
 }
