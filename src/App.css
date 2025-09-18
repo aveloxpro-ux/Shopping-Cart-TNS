@@ -10,22 +10,16 @@
 
   --green: #9fe6a8; /* darker green for ADD/SAVE */
   --green-hover: #8dd494;
-  --red: #ffe3e3; /* button background, subtle */
+  --red: #ffe3e3;   /* button background, subtle */
   --red-text: #b91c1c; /* button text */
 }
 
-* {
-  box-sizing: border-box;
-}
-html,
-body,
-#root {
-  height: 100%;
-}
+* { box-sizing: border-box; }
+html, body, #root { height: 100%; }
+html, body { overflow-x: hidden; }   /* <- prevent sideways scroll */
 body {
   margin: 0;
-  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto,
-    'Helvetica Neue', Arial, 'Apple Color Emoji', 'Segoe UI Emoji';
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Apple Color Emoji","Segoe UI Emoji";
   color: var(--ink);
   background: #f6f6f6;
 }
@@ -33,7 +27,8 @@ body {
 .wrap {
   max-width: 920px;
   margin: 24px auto;
-  padding: 0 16px 48px;
+  padding: 0 12px 48px;              /* tighter side padding */
+  width: 100%;
 }
 
 /* header */
@@ -51,9 +46,7 @@ body {
   align-items: center;
   gap: 8px;
 }
-.title .emoji {
-  opacity: 0.8;
-}
+.title .emoji { opacity: .8; }
 
 .totalBox {
   display: grid;
@@ -72,6 +65,7 @@ body {
   padding: 6px 10px;
   font-variant-numeric: tabular-nums;
   text-align: right;
+  width: 100%;
 }
 
 /* card (table container) */
@@ -80,12 +74,13 @@ body {
   background: var(--panel);
   padding: 12px;
   margin-bottom: 16px;
+  width: 100%;
 }
 
 .tableHeader,
 .row {
   display: grid;
-  grid-template-columns: 56px 1fr 90px 120px 140px 92px; /* No., Item, Qty, Unit, Amount, Action */
+  grid-template-columns: 56px 1fr 90px 120px 140px 92px; /* desktop */
   align-items: center;
   gap: 8px;
 }
@@ -99,7 +94,7 @@ body {
 
 /* >>> Fixed 10-row viewport, scrollable when more rows <<< */
 .tableBody {
-  height: calc(10 * var(--row-h)); /* always show ~10 lines */
+  height: calc(10 * var(--row-h));     /* always show ~10 lines */
   overflow-y: auto;
   background: #fff;
   border: 1px solid var(--border);
@@ -111,35 +106,19 @@ body {
   border-bottom: 1px solid #eee;
   cursor: pointer;
 }
-.row:hover {
-  background: #f7f7f7;
-}
-.row.selected {
-  background: #eef6ff;
-}
-.row:last-child {
-  border-bottom: none;
-}
+.row:hover { background: #f7f7f7; }
+.row.selected { background: #eef6ff; }
+.row:last-child { border-bottom: none; }
 
-.col.no {
-  text-align: right;
-  padding-right: 6px;
-}
-.col.qty,
-.col.unit,
-.col.amount,
-.col.action {
-  text-align: right;
-}
+.col.no { text-align: right; padding-right: 6px; }
+.col.qty, .col.unit, .col.amount, .col.action { text-align: right; }
 .itemCell {
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
 }
 
-.mono {
-  font-variant-numeric: tabular-nums;
-}
+.mono { font-variant-numeric: tabular-nums; }
 
 /* REMOVE button (red), smaller font than item name */
 .btn.remove {
@@ -149,12 +128,10 @@ body {
   padding: 6px 10px;
   border-radius: 4px;
   font-weight: 600;
-  font-size: 12px; /* smaller than item text */
+  font-size: 12px;  /* smaller than item text */
   cursor: pointer;
 }
-.btn.remove:hover {
-  filter: brightness(0.98);
-}
+.btn.remove:hover { filter: brightness(0.98); }
 
 /* footer below table */
 .cardFooter {
@@ -168,10 +145,7 @@ body {
   align-items: center;
   gap: 10px;
 }
-.muted {
-  color: var(--muted);
-  font-size: 12px;
-}
+.muted { color: var(--muted); font-size: 12px; }
 
 /* add / edit panel */
 .addPanel {
@@ -179,47 +153,32 @@ body {
   background: var(--panel);
   padding: 14px;
   display: grid;
-  grid-template-columns: 1fr 100px 140px auto; /* wider last column for buttons */
+  grid-template-columns: 1fr 120px 160px auto; /* desktop */
   gap: 12px;
   align-items: end;
+  width: 100%;
 }
 
 /* inputs — make actual typed text black & aligned nicely */
-.field {
-  display: grid;
-  gap: 6px;
-}
-.field label {
-  font-size: 12px;
-  color: var(--muted);
-}
-.field.narrow {
-  max-width: 180px;
-}
+.field { display: grid; gap: 6px; }
+.field label { font-size: 12px; color: var(--muted); }
+.field.narrow { max-width: 180px; }
 
 .in {
   width: 100%;
   border: 1px solid var(--border);
   background: #fff;
-  padding: 10px 12px; /* a bit taller for better fit */
+  padding: 10px 12px;        /* a bit taller for better fit */
   border-radius: 4px;
   font-size: 14px;
   line-height: 1.2;
-  color: #111; /* typed text = black */
+  color: #111;               /* typed text = black */
 }
-.in::placeholder {
-  color: #999;
-}
-.in.number {
-  text-align: right;
-  font-variant-numeric: tabular-nums;
-}
+.in::placeholder { color: #999; }
+.in.number { text-align: right; font-variant-numeric: tabular-nums; }
 
 /* actions / buttons */
-.actions {
-  display: flex;
-  justify-content: flex-end;
-}
+.actions { display: flex; justify-content: flex-end; }
 .btn {
   border: 1px solid #1a1a1a;
   background: #e9f0ff;
@@ -227,22 +186,12 @@ body {
   border-radius: 4px;
   font-weight: 700;
   cursor: pointer;
-  color: #111; /* default button text black */
+  color: #111;               /* default button text black */
 }
-.btn:hover {
-  filter: brightness(0.98);
-}
-.btn.ghost {
-  background: #fff;
-}
-.btn.add {
-  background: var(--green);
-  border-color: #1a1a1a;
-  color: #111;
-}
-.btn.add:hover {
-  background: var(--green-hover);
-}
+.btn:hover { filter: brightness(0.98); }
+.btn.ghost  { background: #fff; }
+.btn.add    { background: var(--green); border-color: #1a1a1a; color: #111; }
+.btn.add:hover { background: var(--green-hover); }
 
 .errors {
   margin-top: 8px;
@@ -251,16 +200,43 @@ body {
   font-size: 13px;
 }
 
-/* responsive */
-@media (max-width: 760px) {
-  .totalBox {
-    grid-template-columns: 1fr 1fr;
-  }
-  .tableHeader,
-  .row {
-    grid-template-columns: 46px 1fr 70px 110px 120px 92px;
+/* ---------- MOBILE LAYOUTS ---------- */
+
+/* <= 600px: tighten columns & gaps; shrink fonts slightly */
+@media (max-width: 600px) {
+  .wrap { padding: 0 8px 40px; }
+  .title { font-size: 17px; }
+  .tableHeader, .row {
+    grid-template-columns: 40px 1fr 56px 80px 90px 70px;  /* narrower */
+    gap: 6px;
+    font-size: 14px;
   }
   .addPanel {
-    grid-template-columns: 1fr 90px 120px 100px;
+    grid-template-columns: 1fr 90px 120px auto;          /* room for buttons */
+    gap: 10px;
   }
+  .totalBox {
+    grid-template-columns: auto 140px;                   /* label then value */
+    gap: 6px;
+  }
+  .totalLabel { text-align: right; font-size: 11px; }
+  .totalValue { padding: 6px 8px; font-size: 14px; }
+}
+
+/* <= 420px: extra-compact */
+@media (max-width: 420px) {
+  :root { --row-h: 36px; }                               /* slightly shorter rows */
+  .tableHeader, .row {
+    grid-template-columns: 34px 1fr 48px 70px 78px 64px; /* fits ~360–400px */
+    gap: 5px;
+    font-size: 13px;
+  }
+  .addPanel {
+    grid-template-columns: 1fr 80px 100px auto;          /* inputs + buttons */
+    gap: 8px;
+  }
+  .in { padding: 9px 10px; font-size: 13.5px; }
+  .btn { padding: 8px 12px; }
+  .btn.remove { padding: 5px 8px; font-size: 11.5px; }
+  .totalValue { font-size: 13.5px; }
 }
