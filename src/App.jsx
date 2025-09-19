@@ -2,21 +2,19 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import "./App.css";
 
 /**
- * Cart Builder — v14
- * Changes:
- * 1) Buttons 10% smaller + slightly smaller font
- * 2) Panel "Amount" = Unit Price (no dividing by qty); table Amount = unitPrice * qty
- * 3) Table Amount column shows plain number (no "k VND"); Total still shows "k VND"
- * Other features kept:
- * - 7 visible table rows
- * - 3-row panel: Row1: Item Name; Row2: Qty | Amount; Row3: Cancel | Save
- * - Tap row to edit; small "X" remove; clear-all modal; mobile-friendly inputs
+ * Cart Builder — v15
+ * - Panel Row2 stays TWO columns (Qty 40% | Amount 60%) on all widths
+ * - Enter key moves focus: Item -> Qty -> Amount; on Amount it dismisses keyboard
+ * - Panel Amount = unit price; Table Amount = qty * unit price (plain number)
+ * - Total box still shows k VND
+ * - Buttons slightly smaller (kept)
+ * - 7 visible table rows; clear-all modal
  */
 
 export default function App() {
   const [items, setItems] = useState(() => {
     try {
-      const raw = localStorage.getItem("shopping_cart_items_v14");
+      const raw = localStorage.getItem("shopping_cart_items_v15");
       return raw ? JSON.parse(raw) : [];
     } catch {
       return [];
@@ -25,7 +23,7 @@ export default function App() {
 
   const [name, setName] = useState("");
   const [qtyStr, setQtyStr] = useState("");
-  const [amountStr, setAmountStr] = useState(""); // this is Unit Price in logic
+  const [amountStr, setAmountStr] = useState(""); // panel Amount = unit price
   const [errors, setErrors] = useState([]);
   const [editingId, setEditingId] = useState(null);
   const [showConfirm, setShowConfirm] = useState(false);
@@ -34,12 +32,15 @@ export default function App() {
   const panelRef = useRef(null);
   const lastActionRef = useRef(null);
 
-  // persist
+  // input refs for Enter-to-next
+  const nameRef = useRef(null);
+  const qtyRef = useRef(null);
+  const amountRef = useRef(null);
+
   useEffect(() => {
-    localStorage.setItem("shopping_cart_items_v14", JSON.stringify(items));
+    localStorage.setItem("shopping_cart_items_v15", JSON.stringify(items));
   }, [items]);
 
-  // scroll to bottom after add
   useEffect(() => {
     if (lastActionRef.current === "add" && tableRef.current) {
       tableRef.current.scrollTop = tableRef.current.scrollHeight;
@@ -47,30 +48,28 @@ export default function App() {
     lastActionRef.current = null;
   }, [items]);
 
-  // totals (subtotal used for Total Amount box)
   const totals = useMemo(() => {
     const subtotal = items.reduce((s, it) => s + num(it.qty) * num(it.unitPrice), 0);
     const totalQty = items.reduce((s, it) => s + num(it.qty), 0);
     return { subtotal, totalQty };
   }, [items]);
 
-  // click row to edit
   function onRowClick(it) {
     setEditingId(it.id);
     setName(it.name);
-    setQtyStr(String(num(it.qty) || ""));          // show qty
-    setAmountStr(String(num(it.unitPrice) || "")); // panel Amount holds UNIT PRICE
+    setQtyStr(String(num(it.qty) || ""));
+    setAmountStr(String(num(it.unitPrice) || "")); // panel Amount shows unit price
     panelRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    nameRef.current?.focus();
   }
 
-  // add or save
   function addOrSave() {
     const errs = validateForPanel(name, qtyStr, amountStr);
     setErrors(errs);
     if (errs.length) return;
 
     const qty = parseIntSafe(qtyStr);
-    const unitPrice = parseFloatSafe(amountStr); // <- Amount field is unit price
+    const unitPrice = parseFloatSafe(amountStr); // <- Amount is unit price
 
     if (editingId) {
       setItems(prev =>
@@ -83,7 +82,7 @@ export default function App() {
       lastActionRef.current = "save";
     } else {
       const newItem = { id: uid(), name: name.trim(), qty, unitPrice: Number(unitPrice) };
-      setItems(prev => [...prev, newItem]); // append to bottom
+      setItems(prev => [...prev, newItem]);
       lastActionRef.current = "add";
     }
     clearForm();
@@ -112,6 +111,19 @@ export default function App() {
     setQtyStr("");
     setAmountStr("");
     setErrors([]);
+    nameRef.current?.focus();
+  }
+
+  // Enter -> next input; on last, blur() to close keyboard
+  function handleEnterAdvance(e, nextRef) {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      if (nextRef && nextRef.current) {
+        nextRef.current.focus();
+      } else {
+        e.currentTarget.blur();
+      }
+    }
   }
 
   return (
@@ -156,7 +168,7 @@ export default function App() {
                 <div className="col item itemCell">{it.name}</div>
                 <div className="col qty mono">{num(it.qty)}</div>
                 <div className="col unit mono">{num(it.unitPrice).toFixed(1)}</div>
-                {/* Amount column = qty * unitPrice, plain number */}
+                {/* Amount column is plain number */}
                 <div className="col amount mono">{num(lineAmt).toFixed(1)}</div>
                 <div className="col action">
                   <button
@@ -186,47 +198,56 @@ export default function App() {
         </div>
       </section>
 
-      {/* Add / Edit panel (3 rows) */}
+      {/* Add/Edit Panel */}
       <section className="panel-3rows" ref={panelRef}>
-        {/* Row 1: Item Name */}
+        {/* Row 1 */}
         <div className="row1">
           <label className="lbl">Item Name</label>
           <input
+            ref={nameRef}
             className="in"
             placeholder="e.g. Book"
             value={name}
             onChange={(e) => setName(e.target.value)}
+            onKeyDown={(e) => handleEnterAdvance(e, qtyRef)}
+            enterKeyHint="next"
           />
         </div>
 
-        {/* Row 2: Qty | Amount (Amount = Unit Price) */}
+        {/* Row 2: Qty (40%) | Amount (60%) */}
         <div className="row2">
           <div className="field">
             <label className="lbl">Qty</label>
             <input
+              ref={qtyRef}
               className="in"
               type="text"
               inputMode="numeric"
               pattern="[0-9]*"
               value={qtyStr}
               onChange={(e) => setQtyStr(onlyDigits(e.target.value))}
+              onKeyDown={(e) => handleEnterAdvance(e, amountRef)}
+              enterKeyHint="next"
             />
           </div>
 
           <div className="field">
             <label className="lbl">Amount</label>
             <input
+              ref={amountRef}
               className="in"
               type="text"
               inputMode="decimal"
               pattern="[0-9]*[.,]?[0-9]*"
               value={amountStr}
               onChange={(e) => setAmountStr(onlyDecimal(e.target.value))}
+              onKeyDown={(e) => handleEnterAdvance(e, null)} /* last -> blur */
+              enterKeyHint="done"
             />
           </div>
         </div>
 
-        {/* Row 3: buttons */}
+        {/* Row 3 */}
         <div className="row3">
           <button className="btn ghost" onClick={clearForm}>CANCEL</button>
           <button className="btn add" onClick={addOrSave}>SAVE</button>

@@ -9,10 +9,10 @@
   --green: #9fe6a8;
   --green-hover: #8dd494;
 
-  /* Button sizing */
-  --btn-pad-y: 9px;     /* ~10% smaller than 10px */
-  --btn-pad-x: 14px;    /* slightly narrower */
-  --btn-font: 15px;     /* one size smaller than 16px */
+  /* Button sizing (10% smaller, slightly smaller font) */
+  --btn-pad-y: 9px;
+  --btn-pad-x: 14px;
+  --btn-font: 15px;
 }
 
 * { box-sizing: border-box; }
@@ -74,7 +74,7 @@ body {
   font-weight: 700;
   cursor: pointer;
 }
-.remX:hover { filter: brightness(0.97); }
+.remX:hover { filter: brightness(0.97)); }
 
 /* footer */
 .cardFooter { display: flex; justify-content: space-between; align-items: center; padding-top: 8px; }
@@ -98,24 +98,18 @@ body {
   align-items: center;
 }
 
-/* Row 2: TWO equal columns; inside each, label+input full width */
+/* Row 2: TWO columns that never stack (Qty 40% | Amount 60%) */
 .panel-3rows .row2 {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 2fr 3fr; /* 40% / 60% */
   gap: 12px;
 }
 .panel-3rows .row2 .field {
   display: grid;
-  grid-template-columns: auto 1fr;
+  grid-template-columns: auto 1fr; /* label + input */
   gap: 8px;
   align-items: center;
-}
-
-/* Row 3: buttons on ends */
-.panel-3rows .row3 {
-  display: flex;
-  justify-content: space-between; /* CANCEL left, SAVE right */
-  gap: 10px;
+  min-width: 0; /* prevent overflow on small iPhones */
 }
 
 .lbl { font-size: 13px; color: var(--muted); white-space: nowrap; }
@@ -129,9 +123,17 @@ body {
   font-size: 16px; /* >=16 to avoid iOS zoom */
   line-height: 1.4;
   color: #111;
+  min-width: 0; /* allow shrink */
 }
 
-/* ---- Buttons (10% smaller, slightly smaller font) ---- */
+/* Row 3: buttons on ends */
+.panel-3rows .row3 {
+  display: flex;
+  justify-content: space-between; /* CANCEL left, SAVE right */
+  gap: 10px;
+}
+
+/* Buttons (10% smaller, slightly smaller font) */
 .btn {
   border: 1px solid #1a1a1a;
   border-radius: 4px;
@@ -163,13 +165,16 @@ body {
   }
   .totalBox { grid-template-columns: auto 140px; gap: 6px; }
 
-  .panel-3rows .row2 { grid-template-columns: 1fr 1fr; gap: 10px; }
+  /* keep 40/60 split even on small phones */
+  .panel-3rows .row2 { grid-template-columns: 2fr 3fr; gap: 10px; }
 }
+
 @media (max-width: 420px) {
   :root { --row-h: 44px; }
   .tableHeader, .row {
     grid-template-columns: 34px 1fr 48px 72px 78px 34px;
     gap: 5px; font-size: 13px;
   }
-  .panel-3rows .row2 { grid-template-columns: 1fr; } /* stack on very small phones */
+  /* still keep two columns */
+  .panel-3rows .row2 { grid-template-columns: 2fr 3fr; }
 }
