@@ -2,18 +2,13 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import "./App.css";
 
 /**
- * Cart Builder — v16
- * - iOS fix: Qty uses inputMode="decimal" (so Return/Next appears) while we still restrict to digits only.
- * - Panel Row2 stays TWO columns (Qty 40% | Amount 60%) on all widths
- * - Enter key moves focus: Item -> Qty -> Amount; on Amount it dismisses keyboard
- * - Panel Amount = unit price; Table Amount = qty * unit price (plain number)
- * - Total box shows k VND; buttons slightly smaller; 7-row table; clear-all modal
+ * Cart Builder — v17
  */
 
 export default function App() {
   const [items, setItems] = useState(() => {
     try {
-      const raw = localStorage.getItem("shopping_cart_items_v16");
+      const raw = localStorage.getItem("shopping_cart_items_v17");
       return raw ? JSON.parse(raw) : [];
     } catch {
       return [];
@@ -31,13 +26,13 @@ export default function App() {
   const panelRef = useRef(null);
   const lastActionRef = useRef(null);
 
-  // input refs for Enter-to-next
+  // refs for Enter-to-next
   const nameRef = useRef(null);
   const qtyRef = useRef(null);
   const amountRef = useRef(null);
 
   useEffect(() => {
-    localStorage.setItem("shopping_cart_items_v16", JSON.stringify(items));
+    localStorage.setItem("shopping_cart_items_v17", JSON.stringify(items));
   }, [items]);
 
   useEffect(() => {
@@ -57,7 +52,7 @@ export default function App() {
     setEditingId(it.id);
     setName(it.name);
     setQtyStr(String(num(it.qty) || ""));
-    setAmountStr(String(num(it.unitPrice) || "")); // panel Amount shows unit price
+    setAmountStr(String(num(it.unitPrice) || "")); // panel shows unit price
     panelRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
     nameRef.current?.focus();
   }
@@ -68,20 +63,17 @@ export default function App() {
     if (errs.length) return;
 
     const qty = parseIntSafe(qtyStr);
-    const unitPrice = parseFloatSafe(amountStr); // <- Amount is unit price
+    const unitPrice = parseFloatSafe(amountStr); // Amount = unit price
 
     if (editingId) {
       setItems(prev =>
         prev.map(it =>
-          it.id === editingId
-            ? { ...it, name: name.trim(), qty, unitPrice: Number(unitPrice) }
-            : it
+          it.id === editingId ? { ...it, name: name.trim(), qty, unitPrice } : it
         )
       );
       lastActionRef.current = "save";
     } else {
-      const newItem = { id: uid(), name: name.trim(), qty, unitPrice: Number(unitPrice) };
-      setItems(prev => [...prev, newItem]);
+      setItems(prev => [...prev, { id: uid(), name: name.trim(), qty, unitPrice }]);
       lastActionRef.current = "add";
     }
     clearForm();
@@ -93,15 +85,10 @@ export default function App() {
     lastActionRef.current = "remove";
   }
 
-  function requestClearAll() {
-    setShowConfirm(true);
-  }
+  function requestClearAll() { setShowConfirm(true); }
   function respondClearAll(yes) {
     setShowConfirm(false);
-    if (yes) {
-      setItems([]);
-      clearForm();
-    }
+    if (yes) { setItems([]); clearForm(); }
   }
 
   function clearForm() {
@@ -113,15 +100,12 @@ export default function App() {
     nameRef.current?.focus();
   }
 
-  // Enter -> next input; on last, blur() to close keyboard
+  // Enter -> next input; last -> blur() to close keyboard
   function handleEnterAdvance(e, nextRef) {
     if (e.key === "Enter") {
       e.preventDefault();
-      if (nextRef && nextRef.current) {
-        nextRef.current.focus();
-      } else {
-        e.currentTarget.blur();
-      }
+      if (nextRef?.current) nextRef.current.focus();
+      else e.currentTarget.blur();
     }
   }
 
@@ -139,7 +123,7 @@ export default function App() {
         </div>
       </header>
 
-      {/* Table Card */}
+      {/* Table */}
       <section className="card">
         <div className="tableHeader">
           <div className="col no">No.</div>
@@ -147,11 +131,13 @@ export default function App() {
           <div className="col qty">Qty</div>
           <div className="col unit">Unit Price</div>
           <div className="col amount">Amount</div>
-          <div className="col action"></div>
+          <div className="col action" />
         </div>
 
         <div className="tableBody" ref={tableRef}>
-          {items.length === 0 ? <div className="empty">No items yet. Add something below.</div> : null}
+          {items.length === 0 && (
+            <div className="empty">No items yet. Add something below.</div>
+          )}
 
           {items.map((it, idx) => {
             const lineAmt = num(it.qty) * num(it.unitPrice);
@@ -167,20 +153,14 @@ export default function App() {
                 <div className="col item itemCell">{it.name}</div>
                 <div className="col qty mono">{num(it.qty)}</div>
                 <div className="col unit mono">{num(it.unitPrice).toFixed(1)}</div>
-                {/* Amount column is plain number */}
                 <div className="col amount mono">{num(lineAmt).toFixed(1)}</div>
                 <div className="col action">
                   <button
                     className="remX"
                     aria-label="Remove"
                     title="Remove"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      removeItem(it.id);
-                    }}
-                  >
-                    X
-                  </button>
+                    onClick={(e) => { e.stopPropagation(); removeItem(it.id); }}
+                  >X</button>
                 </div>
               </div>
             );
@@ -213,7 +193,7 @@ export default function App() {
           />
         </div>
 
-        {/* Row 2: Qty (40%) | Amount (60%) */}
+        {/* Row 2 — 40% / 60% */}
         <div className="row2">
           <div className="field">
             <label className="lbl">Qty</label>
@@ -221,8 +201,7 @@ export default function App() {
               ref={qtyRef}
               className="in"
               type="text"
-              /* iOS: use decimal keypad so Return/Next appears, still keep digits only */
-              inputMode="decimal"
+              inputMode="decimal"      // iOS shows Return/Next
               pattern="[0-9]*"
               value={qtyStr}
               onChange={(e) => setQtyStr(onlyDigits(e.target.value))}
@@ -241,7 +220,7 @@ export default function App() {
               pattern="[0-9]*[.,]?[0-9]*"
               value={amountStr}
               onChange={(e) => setAmountStr(onlyDecimal(e.target.value))}
-              onKeyDown={(e) => handleEnterAdvance(e, null)} /* last -> blur */
+              onKeyDown={(e) => handleEnterAdvance(e, null)}
               enterKeyHint="done"
             />
           </div>
@@ -261,7 +240,7 @@ export default function App() {
         </ul>
       )}
 
-      {/* Clear-all modal */}
+      {/* Clear all modal */}
       {showConfirm && (
         <div className="modalBackdrop" role="dialog" aria-modal="true">
           <div className="modalBox">
@@ -278,7 +257,7 @@ export default function App() {
   );
 }
 
-/* ---------- Utils ---------- */
+/* ---------- utils ---------- */
 function uid() {
   return Date.now().toString(36) + Math.random().toString(36).slice(2);
 }
@@ -295,32 +274,25 @@ function parseFloatSafe(s) {
   const n = Number(cleaned);
   return Number.isFinite(n) ? n : 0;
 }
-function fmtKVND(v) {
-  return `${num(v).toFixed(1)} k VND`;
-}
+function fmtKVND(v) { return `${num(v).toFixed(1)} k VND`; }
 function validateForPanel(name, qtyStr, amountStr) {
   const errs = [];
   if (!name.trim()) errs.push("Item name is required.");
   if (String(qtyStr).trim() === "") errs.push("Qty is required.");
   if (String(amountStr).trim() === "") errs.push("Amount (unit price) is required.");
-
   const qty = parseIntSafe(qtyStr);
   const unitPrice = parseFloatSafe(amountStr);
-
   if (qty <= 0) errs.push("Qty must be ≥ 1.");
   if (unitPrice < 0) errs.push("Amount (unit price) must be ≥ 0.");
   return errs;
 }
-function onlyDigits(s) {
-  return String(s).replace(/[^\d]/g, "");
-}
+function onlyDigits(s) { return String(s).replace(/[^\d]/g, ""); }
 function onlyDecimal(s) {
-  // keep digits and a single '.' or ','
   s = String(s).replace(/[^0-9\.,]/g, "");
-  const firstSep = s.search(/[.,]/);
-  if (firstSep !== -1) {
-    const head = s.slice(0, firstSep + 1);
-    const tail = s.slice(firstSep + 1).replace(/[.,]/g, "");
+  const i = s.search(/[.,]/);
+  if (i !== -1) {
+    const head = s.slice(0, i + 1);
+    const tail = s.slice(i + 1).replace(/[.,]/g, "");
     return head + tail;
   }
   return s;
