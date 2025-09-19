@@ -2,19 +2,18 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import "./App.css";
 
 /**
- * Cart Builder — v15
+ * Cart Builder — v16
+ * - iOS fix: Qty uses inputMode="decimal" (so Return/Next appears) while we still restrict to digits only.
  * - Panel Row2 stays TWO columns (Qty 40% | Amount 60%) on all widths
  * - Enter key moves focus: Item -> Qty -> Amount; on Amount it dismisses keyboard
  * - Panel Amount = unit price; Table Amount = qty * unit price (plain number)
- * - Total box still shows k VND
- * - Buttons slightly smaller (kept)
- * - 7 visible table rows; clear-all modal
+ * - Total box shows k VND; buttons slightly smaller; 7-row table; clear-all modal
  */
 
 export default function App() {
   const [items, setItems] = useState(() => {
     try {
-      const raw = localStorage.getItem("shopping_cart_items_v15");
+      const raw = localStorage.getItem("shopping_cart_items_v16");
       return raw ? JSON.parse(raw) : [];
     } catch {
       return [];
@@ -38,7 +37,7 @@ export default function App() {
   const amountRef = useRef(null);
 
   useEffect(() => {
-    localStorage.setItem("shopping_cart_items_v15", JSON.stringify(items));
+    localStorage.setItem("shopping_cart_items_v16", JSON.stringify(items));
   }, [items]);
 
   useEffect(() => {
@@ -222,7 +221,8 @@ export default function App() {
               ref={qtyRef}
               className="in"
               type="text"
-              inputMode="numeric"
+              /* iOS: use decimal keypad so Return/Next appears, still keep digits only */
+              inputMode="decimal"
               pattern="[0-9]*"
               value={qtyStr}
               onChange={(e) => setQtyStr(onlyDigits(e.target.value))}

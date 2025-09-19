@@ -1,180 +1,262 @@
+/* App.css – v16 */
+
 :root {
-  --row-h: 48px;   /* 7 visible rows (taller for touch) */
-  --border: #cfcfcf;
-  --ink: #212121;
-  --muted: #666;
+  --border: #ccc;
   --bg: #fff;
-  --panel: #fafafa;
-
-  --green: #9fe6a8;
-  --green-hover: #8dd494;
-
-  /* Button sizing (10% smaller, slightly smaller font) */
-  --btn-pad-y: 9px;
-  --btn-pad-x: 14px;
-  --btn-font: 15px;
+  --muted: #666;
+  --green: #9be7a6;
+  --green-dark: #67c374;
+  --red: #f4a6a6;
+  --red-dark: #d9534f;
+  --font: "Segoe UI", sans-serif;
+  --btn-h: 40px; /* slightly smaller */
+  --btn-font: 14px; /* one step smaller */
 }
-
-* { box-sizing: border-box; }
-html, body, #root { height: 100%; }
-html, body { overflow-x: hidden; margin: 0; }
 
 body {
-  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
-  color: var(--ink);
-  background: #f6f6f6;
+  font-family: var(--font);
+  background: #f7f7f7;
+  padding: 1rem;
+  margin: 0;
 }
 
-.wrap { max-width: 920px; margin: 16px auto; padding: 0 10px 40px; }
+.wrap {
+  max-width: 600px;
+  margin: auto;
+}
 
-/* ---------- header ---------- */
 .header {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 12px;
+  display: flex;
+  justify-content: space-between;
   align-items: center;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
 }
-.title { font-weight: 700; font-size: 18px; display: inline-flex; align-items: center; gap: 8px; }
-.title .emoji { opacity: .85; }
-.totalBox { display: grid; grid-template-columns: 120px 200px; gap: 8px; align-items: center; }
-.totalLabel { font-size: 12px; color: var(--muted); text-align: right; }
-.totalValue { border: 1px solid var(--border); background: var(--bg); padding: 6px 10px; text-align: right; font-variant-numeric: tabular-nums; }
 
-/* ---------- table card ---------- */
-.card { border: 1px solid var(--ink); background: var(--panel); padding: 10px; margin-bottom: 14px; }
+.title {
+  font-size: 20px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.emoji {
+  font-size: 22px;
+}
+
+.totalBox {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.totalLabel {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.totalValue {
+  font-size: 15px;
+  font-weight: bold;
+}
+
+/* Card (table) */
+.card {
+  border: 1px solid var(--border);
+  background: var(--bg);
+  margin-bottom: 10px;
+}
+
 .tableHeader,
 .row {
   display: grid;
-  grid-template-columns: 50px 1fr 70px 100px 100px 40px; /* wider Item, small remove */
+  grid-template-columns: 34px 1fr 60px 90px 100px 54px;
+  padding: 4px 6px;
   align-items: center;
-  gap: 6px;
-}
-.tableHeader { font-size: 13px; font-weight: 600; border-bottom: 1px solid var(--border); padding: 4px 2px; }
-.tableBody { height: calc(7 * var(--row-h)); overflow-y: auto; background: #fff; border: 1px solid var(--border); }
-.empty { padding: 10px 12px; color: #333; }
-.row { min-height: var(--row-h); padding: 4px 4px; border-bottom: 1px solid #eee; cursor: pointer; }
-.row:hover { background: #f7f7f7; }
-.row.selected { background: #eef6ff; }
-.row:last-child { border-bottom: none; }
-
-.col.no { text-align: right; padding-right: 6px; }
-.col.qty, .col.unit, .col.amount, .col.action { text-align: right; }
-.itemCell { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
-.mono { font-variant-numeric: tabular-nums; }
-
-/* small remove X */
-.remX {
-  width: 22px; height: 22px; line-height: 20px;
-  padding: 0;
-  border: 1px solid #b91c1c;
-  color: #b91c1c;
-  background: #ffe3e3;
-  border-radius: 3px;
-  font-weight: 700;
-  cursor: pointer;
-}
-.remX:hover { filter: brightness(0.97)); }
-
-/* footer */
-.cardFooter { display: flex; justify-content: space-between; align-items: center; padding-top: 8px; }
-.footerLeft { display: flex; align-items: center; gap: 10px; }
-.muted { color: var(--muted); font-size: 12px; }
-
-/* ---------- add/edit panel (3 rows) ---------- */
-.panel-3rows {
-  border: 1px solid var(--ink);
-  background: var(--panel);
-  padding: 12px;
-  display: grid;
-  gap: 12px;
+  border-bottom: 1px solid #eee;
+  font-size: 14px;
 }
 
-/* Row 1: label + full-width input */
-.panel-3rows .row1 {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 8px;
-  align-items: center;
+.tableHeader {
+  background: #fafafa;
+  font-weight: bold;
 }
 
-/* Row 2: TWO columns that never stack (Qty 40% | Amount 60%) */
-.panel-3rows .row2 {
-  display: grid;
-  grid-template-columns: 2fr 3fr; /* 40% / 60% */
-  gap: 12px;
-}
-.panel-3rows .row2 .field {
-  display: grid;
-  grid-template-columns: auto 1fr; /* label + input */
-  gap: 8px;
-  align-items: center;
-  min-width: 0; /* prevent overflow on small iPhones */
+.row.selected {
+  background: #e8f5ff;
 }
 
-.lbl { font-size: 13px; color: var(--muted); white-space: nowrap; }
-
-.in {
-  width: 100%;
-  border: 1px solid var(--border);
-  background: #fff;
-  padding: 10px 12px;
-  border-radius: 4px;
-  font-size: 16px; /* >=16 to avoid iOS zoom */
-  line-height: 1.4;
-  color: #111;
-  min-width: 0; /* allow shrink */
+.col.mono {
+  font-family: monospace;
 }
 
-/* Row 3: buttons on ends */
-.panel-3rows .row3 {
+.itemCell {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tableBody {
+  max-height: calc(7 * 42px); /* show 7 rows */
+  overflow-y: auto;
+}
+
+.empty {
+  padding: 10px;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.cardFooter {
   display: flex;
-  justify-content: space-between; /* CANCEL left, SAVE right */
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px;
+}
+
+.footerLeft {
+  display: flex;
+  align-items: center;
   gap: 10px;
 }
 
-/* Buttons (10% smaller, slightly smaller font) */
+.muted {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+/* Buttons */
 .btn {
-  border: 1px solid #1a1a1a;
-  border-radius: 4px;
-  padding: var(--btn-pad-y) var(--btn-pad-x);
-  font-weight: 700;
-  cursor: pointer;
+  border: 1px solid #333;
+  background: #eee;
+  padding: 0 14px;
+  height: var(--btn-h);
   font-size: var(--btn-font);
-  color: #111;
-}
-.btn.ghost { background: #fff; }
-.btn.add { background: var(--green); }
-.btn.add:hover { background: var(--green-hover); }
-
-.errors { margin-top: 8px; padding-left: 18px; color: #b91c1c; font-size: 13px; }
-
-/* ---------- modal ---------- */
-.modalBackdrop { position: fixed; inset: 0; background: rgba(0,0,0,.35); display: grid; place-items: center; z-index: 50; }
-.modalBox { width: min(460px, 92vw); background: #fff; border: 1px solid #1a1a1a; border-radius: 8px; padding: 18px; box-shadow: 0 10px 30px rgba(0,0,0,.25); }
-.modalTitle { font-weight: 700; margin-bottom: 6px; }
-.modalBody { color: #333; margin-bottom: 14px; }
-.modalActions { display: flex; gap: 10px; justify-content: flex-end; }
-
-/* ---------- responsive tweaks ---------- */
-@media (max-width: 600px) {
-  .wrap { padding: 0 8px 36px; }
-  .tableHeader, .row {
-    grid-template-columns: 40px 1fr 56px 80px 88px 38px;
-    gap: 6px; font-size: 14px;
-  }
-  .totalBox { grid-template-columns: auto 140px; gap: 6px; }
-
-  /* keep 40/60 split even on small phones */
-  .panel-3rows .row2 { grid-template-columns: 2fr 3fr; gap: 10px; }
+  font-weight: bold;
+  cursor: pointer;
+  border-radius: 4px;
 }
 
-@media (max-width: 420px) {
-  :root { --row-h: 44px; }
-  .tableHeader, .row {
-    grid-template-columns: 34px 1fr 48px 72px 78px 34px;
-    gap: 5px; font-size: 13px;
-  }
-  /* still keep two columns */
-  .panel-3rows .row2 { grid-template-columns: 2fr 3fr; }
+.btn:hover {
+  opacity: 0.9;
+}
+
+.btn.add {
+  background: var(--green);
+  border-color: var(--green-dark);
+}
+
+.btn.ghost {
+  background: #fff;
+}
+
+.remX {
+  background: var(--red);
+  border: 1px solid var(--red-dark);
+  color: #000;
+  padding: 2px 6px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.remX:hover {
+  background: var(--red-dark);
+  color: #fff;
+}
+
+/* Panel */
+.panel-3rows {
+  border: 1px solid var(--border);
+  background: var(--bg);
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.panel-3rows .row1,
+.panel-3rows .row2,
+.panel-3rows .row3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.panel-3rows .row1 .in {
+  flex: 1;
+}
+
+.panel-3rows .row2 {
+  display: grid;
+  grid-template-columns: 40% 60%;
+  gap: 8px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+}
+
+.lbl {
+  font-size: 13px;
+  margin-bottom: 2px;
+  color: var(--muted);
+}
+
+.in {
+  padding: 8px;
+  font-size: 14px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+}
+
+.row3 {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 6px;
+}
+
+/* Errors */
+.errors {
+  margin: 6px 0;
+  padding-left: 18px;
+  color: red;
+  font-size: 13px;
+}
+
+/* Modal */
+.modalBackdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modalBox {
+  background: #fff;
+  padding: 16px;
+  border-radius: 6px;
+  max-width: 280px;
+}
+
+.modalTitle {
+  font-weight: bold;
+  margin-bottom: 6px;
+}
+
+.modalBody {
+  font-size: 14px;
+  margin-bottom: 12px;
+}
+
+.modalActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.modalActions .equal {
+  flex: 1;
 }
